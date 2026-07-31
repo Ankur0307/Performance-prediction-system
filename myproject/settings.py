@@ -149,6 +149,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'myapp' / 'static',
 ]
 
+# Enable WhiteNoise finders so static files work even if collectstatic didn't run on build
+WHITENOISE_USE_FINDERS = True
+
 # WhiteNoise non-strict static storage to prevent 500 errors on missing manifest lookups
 STORAGES = {
     "default": {
@@ -160,6 +163,7 @@ STORAGES = {
 }
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
 
 
 # ---------------------------------------------------------------------------
