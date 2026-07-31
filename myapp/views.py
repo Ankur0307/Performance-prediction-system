@@ -16,7 +16,12 @@ from reportlab.pdfgen import canvas
 # Login view
 def login_view(request):
     from myapp.models import User as CustomUser
-    ensure_default_admin_exists()
+    try:
+        ensure_default_admin_exists()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"ensure_default_admin_exists error: {e}")
+
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -35,7 +40,11 @@ def login_view(request):
                 elif user.user_type == 'admin':
                     return redirect('admin_dashboard', user_id=user.id)
             except CustomUser.DoesNotExist:
-                return render(request, 'login.html', {'form': form, 'error': 'Invalid credentials'})
+                return render(request, 'login.html', {'form': form, 'error': 'Invalid email or password.'})
+            except Exception as ex:
+                import logging
+                logging.getLogger(__name__).error(f"Login processing error: {ex}", exc_info=True)
+                return render(request, 'login.html', {'form': form, 'error': f'Login processing error: {ex}'})
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
@@ -55,7 +64,17 @@ from django.db.models import Avg
 def student_dashboard(request, student_id):
     student = Student.objects.filter(id=student_id).first() or Student.objects.filter(user_id=student_id).first()
     if not student:
-        student = get_object_or_404(Student, id=student_id)
+        user = User.objects.filter(id=student_id).first()
+        if user:
+            student, _ = Student.objects.get_or_create(
+                user=user,
+                defaults={
+                    "name": user.email.split('@')[0],
+                    "familyname": "Student",
+                }
+            )
+        else:
+            return redirect('login')
 
     # Get all students in the same class
     class_students = Student.objects.filter(class_name=student.class_name) if student.class_name else Student.objects.filter(id=student.id)
@@ -77,10 +96,27 @@ def student_dashboard(request, student_id):
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from .models import Teacher, Student, Message
+from datetime import date
 
 def teacher_dashboard(request, user_id):
-    # Get the teacher based on user_id
-    teacher = get_object_or_404(Teacher, user_id=user_id)
+    # Get the teacher based on user_id, with fallback creation if profile is missing
+    teacher = Teacher.objects.filter(user_id=user_id).first()
+    if not teacher:
+        user = User.objects.filter(id=user_id).first()
+        if user:
+            teacher, _ = Teacher.objects.get_or_create(
+                user=user,
+                defaults={
+                    "name": user.email.split('@')[0],
+                    "familyname": "Teacher",
+                    "phone": "0000000000",
+                    "address": "System",
+                    "hiredate": date.today(),
+                    "subject": "General",
+                }
+            )
+        else:
+            return redirect('login')
 
     # Fetch all students associated with this teacher
     students = Student.objects.filter(teacher=teacher)
@@ -113,7 +149,24 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 def admin_dashboard(request, user_id):
-    admin = get_object_or_404(Admin, user_id=user_id)
+    admin = Admin.objects.filter(user_id=user_id).first()
+    if not admin:
+        user = User.objects.filter(id=user_id).first()
+        if user:
+            admin, _ = Admin.objects.get_or_create(
+                user=user,
+                defaults={
+                    "name": "Admin",
+                    "familyname": "User",
+                    "phone": "0000000000",
+                    "address": "System",
+                    "hiredate": date.today(),
+                    "department": "Administration",
+                }
+            )
+        else:
+            return redirect('login')
+
     students = Student.objects.all()
     teachers = Teacher.objects.all()
     classes = Class.objects.all()
@@ -138,7 +191,6 @@ def admin_dashboard(request, user_id):
         for teacher in teachers
     ]
     teacher_student_counts.sort(key=lambda x: x['zero_count'], reverse=True)
-
 
     if request.method == 'POST' and 'send_message_to_teacher' in request.POST:
         teacher_id = request.POST['teacher']
@@ -167,6 +219,7 @@ def admin_dashboard(request, user_id):
         'teacher_student_counts': teacher_student_counts,
         'students_with_zero_result': students_at_risk,
     })
+
 
 
 
