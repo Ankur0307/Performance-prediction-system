@@ -86,9 +86,9 @@ def teacher_dashboard(request, user_id):
     students = Student.objects.filter(teacher=teacher)
 
     # Categorize students based on their results
-    students_zero = students.filter(result=0).count()
-    students_one = students.filter(result=1).count()
-    students_other = students.exclude(result__in=[0, 1]).count()
+    students_zero = students.filter(Q(result='0') | Q(result='0.0')).count()
+    students_one = students.filter(Q(result='1') | Q(result='1.0')).count()
+    students_other = students.exclude(Q(result__in=['0', '1', '0.0', '1.0'])).count()
 
     # Fetch all messages related to the teacher using custom user email
     messages = Message.objects.filter(
@@ -123,13 +123,13 @@ def admin_dashboard(request, user_id):
     total_teachers = teachers.count()
     total_classes = classes.count()
 
-    # Students at risk (result = 0)
-    students_at_risk = students.filter(result=0)
+    # Students at risk (result = '0' or '0.0')
+    students_at_risk = students.filter(Q(result='0') | Q(result='0.0'))
     students_at_risk_count = students_at_risk.count()
     students_not_at_risk_count = total_students - students_at_risk_count
 
-    # Teachers at risk (teaching students with result = 0)
-    teachers_at_risk_count = teachers.filter(student_set__result=0).distinct().count()
+    # Teachers at risk (teaching students with result = '0' or '0.0')
+    teachers_at_risk_count = teachers.filter(Q(student_set__result='0') | Q(student_set__result='0.0')).distinct().count()
     teachers_not_at_risk_count = total_teachers - teachers_at_risk_count
 
     # Count students with result = 0 per teacher
@@ -138,6 +138,7 @@ def admin_dashboard(request, user_id):
         for teacher in teachers
     ]
     teacher_student_counts.sort(key=lambda x: x['zero_count'], reverse=True)
+
 
     if request.method == 'POST' and 'send_message_to_teacher' in request.POST:
         teacher_id = request.POST['teacher']
@@ -198,8 +199,8 @@ def generate_report(request, student_id):
     form_data = {
         "name": student.name,
         "familyname": student.familyname,
-        "teacher": student.teacher.name,
-        "class_name": student.class_name.name,
+        "teacher": student.teacher.name if student.teacher else "N/A",
+        "class_name": student.class_name.name if student.class_name else "N/A",
         "age": student.age,
         "sex": student.sex,
         "guardian": student.guardian,
@@ -270,9 +271,9 @@ def generate_teacher_report(request, teacher_id):
     students = Student.objects.filter(class_name__in=teacher.classes.all())
     
     # Categorize students by result
-    students_result_0 = students.filter(result=0)
-    students_result_1 = students.filter(result=1)
-    students_result_other = students.exclude(result__in=[0, 1])
+    students_result_0 = students.filter(Q(result='0') | Q(result='0.0'))
+    students_result_1 = students.filter(Q(result='1') | Q(result='1.0'))
+    students_result_other = students.exclude(Q(result__in=['0', '1', '0.0', '1.0']))
 
     # Prepare data for the template
     form_data = {
@@ -343,8 +344,9 @@ def admin_report(request, admin_id):
     total_classes = Class.objects.count()
     
     # Fetch students based on results
-    total_students_result_0 = Student.objects.filter(result=0).count()
-    total_students_result_1 = Student.objects.filter(result=1).count()
+    total_students_result_0 = Student.objects.filter(Q(result='0') | Q(result='0.0')).count()
+    total_students_result_1 = Student.objects.filter(Q(result='1') | Q(result='1.0')).count()
+
 
     # Path to pre-generated QR code image
     qr_image_path = str(settings.BASE_DIR / 'myapp' / 'static' / 'QRID_IDAA23_25.png')
@@ -673,39 +675,37 @@ def predict_student_result(request, student_id):
     # Retrieve student data
     student = get_object_or_404(Student, id=student_id)
 
-    # Prepare the data for prediction
+    # Prepare the data for prediction with fallbacks for None values
     features = [
-        student.age,
-        student.Medu,
-        student.Fedu,
-        student.traveltime,
-        student.studytime,
-        student.failures,
-        student.famrel,
-        student.freetime,
-        student.goout,
-        student.Dalc,
-        student.Walc,
-        student.health,
-        student.absences,
-        student.G1,  # Grade 3 (target variable)
-        
-        # Raw categorical variables (no encoding needed)
-        student.sex,  # Assuming 'sex' is a numeric or categorical field already in the correct format
-        student.famsize,  # Assuming 'famsize' is in a valid format (e.g., 'LE3', 'GT3')
-        student.Pstatus,  # Assuming 'Pstatus' is in a valid format (e.g., 'T', 'A')
-        student.Mjob,  # Assuming 'Mjob' is a valid field (e.g., 'teacher', 'health', etc.)
-        student.Fjob,  # Assuming 'Fjob' is a valid field (e.g., 'teacher', 'health', etc.)
-        student.reason,  # Assuming 'reason' is a valid field (e.g., 'course', 'home', etc.)
-        student.guardian,  # Assuming 'guardian' is a valid field (e.g., 'mother', 'father', etc.)
-        student.schoolsup,  # Assuming 'schoolsup' is a valid field (e.g., 'yes', 'no')
-        student.famsup,  # Assuming 'famsup' is a valid field (e.g., 'yes', 'no')
-        student.paid,  # Assuming 'paid' is a valid field (e.g., 'yes', 'no')
-        student.activities,  # Assuming 'activities' is a valid field (e.g., 'yes', 'no')
-        student.nursery,  # Assuming 'nursery' is a valid field (e.g., 'yes', 'no')
-        student.higher,  # Assuming 'higher' is a valid field (e.g., 'yes', 'no')
-        student.internet,  # Assuming 'internet' is a valid field (e.g., 'yes', 'no')
-        student.romantic  # Assuming 'romantic' is a valid field (e.g., 'yes', 'no')
+        student.age or 16,
+        student.Medu or 0,
+        student.Fedu or 0,
+        student.traveltime or 1,
+        student.studytime or 1,
+        student.failures or 0,
+        student.famrel or 3,
+        student.freetime or 3,
+        student.goout or 3,
+        student.Dalc or 1,
+        student.Walc or 1,
+        student.health or 3,
+        student.absences or 0,
+        student.G1 or 0,
+        student.sex or 1,
+        student.famsize or 1,
+        student.Pstatus or 1,
+        student.Mjob or 5,
+        student.Fjob or 5,
+        student.reason or 4,
+        student.guardian or 1,
+        student.schoolsup or 2,
+        student.famsup or 2,
+        student.paid or 2,
+        student.activities or 2,
+        student.nursery or 2,
+        student.higher or 1,
+        student.internet or 1,
+        student.romantic or 2,
     ]
 
     # Make the prediction using the model
@@ -714,12 +714,13 @@ def predict_student_result(request, student_id):
     # Convert the prediction (which may be int64) to native int type
     prediction_value = int(prediction[0])
 
-    # Save the result to the student's result field
-    student.result = prediction_value
+    # Save the result to the student's result field as a string for CharField compatibility
+    student.result = str(prediction_value)
     student.save()
 
-    # Return a response (you can customize this as needed)
+    # Return a response
     return JsonResponse({'student_id': student_id, 'prediction': prediction_value})
+
 
 
 
