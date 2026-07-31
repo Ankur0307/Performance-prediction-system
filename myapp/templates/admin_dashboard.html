@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <link rel="stylesheet" href="{% static 'admin_dashboard.css' %}">
+    
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var studentsAtRisk = {{ students_at_risk_count|default:0 }};
+        var studentsNotAtRisk = {{ students_not_at_risk_count|default:0 }};
+        var teachersAtRisk = {{ teachers_at_risk_count|default:0 }};
+        var teachersNotAtRisk = {{ teachers_not_at_risk_count|default:0 }};
+    </script> <!-- Include Chart.js -->
+<div id="chart-data" 
+data-students-at-risk="{{ students_at_risk_count|default:0 }}" 
+data-students-not-at-risk="{{ students_not_at_risk_count|default:0 }}" 
+data-teachers-at-risk="{{ teachers_at_risk_count|default:0 }}" 
+data-teachers-not-at-risk="{{ teachers_not_at_risk_count|default:0 }}">
+</div>
+
+    <script src="{% static 'admin_dashboard.js' %}"></script>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header with Admin Info -->
+        <div class="header">
+            <img src="{% static 'user.png' %}" alt="User Image" width="100px">
+            <div>
+                <p>{{ admin.name }} {{ admin.familyname }}</p>
+                <p>Email: {{ admin.user.email }}</p>
+                <p>Department: {{ admin.department }}</p>
+            </div>
+            <a href="/logout/" class="btn">Logout</a>
+        </div>
+        <div class="stats"><h1>Welcome Back, {{ admin.name }}</h1></div>
+        <!-- Stats Section -->
+        <div class="stats">
+            <div>
+                <h3>Stats: </h3>
+                <table><tr><th><img src="{% static '43.png' %}" alt="User Image" width="150px" ></th><td><strong>{{total_students}}</strong></td></tr></table>
+                <table><tr><th><img src="{% static '44.png' %}" alt="User Image" width="150px"></th><td><strong>{{total_teachers}}</strong></td></tr></table>
+                <table><tr><th><img src="{% static '45.png' %}" alt="User Image" width="150px"></th><td><strong>{{total_classes}}</strong></td></tr></table>
+            </div>
+            <div class="actions">
+                <a href="{% url 'generate_admin_report' admin.id %}" class="btn" target="_blank">Generate Report</a>
+                
+            </div>
+        </div>
+        <div class="chart-container"><h3>Easy Access: </h3><!-- Section Buttons -->
+        <div class="buttons-container" id="racco">
+            <a onclick="showDiv('students')" ><img src="{% static '39.png' %}" alt="User Image"  width="290px"></a>
+            <a onclick="showDiv('teachers')"><img src="{% static '40.png' %}" alt="User Image"  width="290px"></a>
+            <a onclick="showDiv('classes')"><img src="{% static '41.png' %}" alt="User Image"  width="290px"></a>
+            <a onclick="showDiv('Recommendations')"><img src="{% static '42  .png' %}" alt="Recommendations" width="290px"></a>
+        </div>
+        </div>
+        <!-- Manage Students Section -->
+        <div id="students" class="section-content">
+            <h2>Manage Students</h2>
+            <div class="buttons-container" id="racco">
+            <a href="{% url 'create_student' %}" class="create-btn">&#10010; Create</a><br></div>
+            <ul>
+                {% for student in students %}
+                    <li>{{ student.name }} <a href="{% url 'ads_student_update' student.id %}"><img src="{% static 'edit.png' %}" alt="User Image" width="30px"></a>  <a href="{% url 'delete_student' student.id %}"><img src="{% static 'delete.png' %}" alt="User Image" width="30px"></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Manage Teachers Section -->
+        <div id="teachers" class="section-content">
+            
+            <h2>Manage Teachers</h2>
+            <div class="buttons-container" id="racco">
+            <a href="{% url 'create_teacher' %}" class="create-btn">&#10010; Create</a><br></div>
+            <ul>
+                {% for teacher in teachers %}
+                    <li>{{ teacher.name }} <a href="{% url 'ads_teacher_update' teacher.id %}"><img src="{% static 'edit.png' %}" alt="User Image" width="30px"></a>  <a href="{% url 'delete_teacher' teacher.id %}"><img src="{% static 'delete.png' %}" alt="User Image" width="30px"></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Manage Classes Section -->
+        <div id="classes" class="section-content">
+            
+            <h2>Manage Classes</h2>
+            <div class="buttons-container" id="racco">
+            <a href="{% url 'create_class' %}" class="create-btn">&#10010; Create</a><br></div>
+            <ul>
+                {% for class in classes %}
+                    <li>{{ class.name }} <a href="{% url 'ads_class_update' class.name %}"><img src="{% static 'edit.png' %}" alt="User Image" width="30px"></a>  <a href="{% url 'delete_class' class.name %}"><img src="{% static 'delete.png' %}" alt="User Image" width="30px"></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+       <!-- Manage Recommendations Section -->
+<div id="Recommendations" class="section-content">
+    <h2>Send Message</h2>
+    <form action="{% url 'send_message_to_teacher' %}" method="POST" id="msg-form">
+        {% csrf_token %}
+
+        <!-- Teacher selection -->
+        <select name="teacher" required style="width:100%;padding:8px;margin-bottom:12px;border-radius:6px;border:1px solid #ccc;">
+            {% for teacher in teachers %}
+                <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Display checkboxes for students with result=0 -->
+        <div><ul>
+            {% for student in students_with_zero_result %}
+                <li><label>
+                    <input type="checkbox" class="student-checkbox" value="{{ student.user.email }}" onclick="updateEmail(this)">
+                    {{ student.name }}
+                </label></li>
+            {% endfor %}
+        </ul></div>
+
+        <!-- ── Live Language Detection Widget ── -->
+        <div id="lang-widget" style="margin-top:14px;">
+
+            <!-- Status bar: detected language badge -->
+            <div id="lang-status" style="
+                display:flex; align-items:center; gap:10px;
+                min-height:32px; margin-bottom:8px; flex-wrap:wrap;">
+                <span style="font-size:13px;color:#666;">🌐 Language detector active</span>
+                <span id="lang-badge" style="
+                    display:none;
+                    padding:3px 10px; border-radius:20px;
+                    font-size:12px; font-weight:600;
+                    background:#e8f4fd; color:#1a73e8; border:1px solid #a8d4f5;">
+                </span>
+                <span id="lang-spinner" style="display:none;font-size:13px;color:#888;">⏳ Detecting…</span>
+            </div>
+
+            <!-- Main message textarea -->
+            <textarea id="message" name="message"
+                placeholder="Type your message in any language — it will be auto-translated to English before sending."
+                required
+                style="width:100%;min-height:110px;padding:10px;border-radius:8px;
+                       border:2px solid #ddd;font-size:14px;resize:vertical;
+                       transition:border-color .2s;"
+                oninput="onMsgInput(this.value)"
+            ></textarea>
+
+            <!-- Translation preview (hidden until non-English detected) -->
+            <div id="translation-box" style="display:none; margin-top:10px;">
+                <div style="
+                    background: linear-gradient(135deg,#f0fdf4,#e6f7ff);
+                    border:1px solid #86efac; border-radius:8px; padding:12px 14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:12px;font-weight:700;color:#16a34a;letter-spacing:.5px;">
+                            🔤 ENGLISH TRANSLATION
+                        </span>
+                        <button type="button" id="use-translation-btn"
+                            onclick="useTranslation()"
+                            style="background:#16a34a;color:#fff;border:none;
+                                   padding:4px 12px;border-radius:20px;font-size:12px;
+                                   cursor:pointer;font-weight:600;">
+                            Use Translation ↑
+                        </button>
+                    </div>
+                    <p id="translation-preview" style="margin:0;font-size:14px;color:#1f2937;line-height:1.5;"></p>
+                </div>
+            </div>
+
+            <!-- Error message -->
+            <div id="lang-error" style="display:none;color:#dc2626;font-size:12px;margin-top:6px;"></div>
+        </div>
+        <!-- ── End Widget ── -->
+
+        <br>
+        <button type="submit" class="btn" name="send_message_to_teacher"
+                style="margin-top:10px;">Send Message</button>
+    </form>
+</div>
+
+<script>
+// ── Live Language Detection Logic ──
+let _langTimer = null;
+let _lastTranslated = '';
+
+function onMsgInput(text) {
+    clearTimeout(_langTimer);
+    const badge   = document.getElementById('lang-badge');
+    const spinner = document.getElementById('lang-spinner');
+    const tbox    = document.getElementById('translation-box');
+    const preview = document.getElementById('translation-preview');
+    const errEl   = document.getElementById('lang-error');
+
+    if (!text.trim()) {
+        badge.style.display   = 'none';
+        spinner.style.display = 'none';
+        tbox.style.display    = 'none';
+        errEl.style.display   = 'none';
+        return;
+    }
+
+    spinner.style.display = 'inline';
+    badge.style.display   = 'none';
+
+    // Debounce: call backend 600ms after user stops typing
+    _langTimer = setTimeout(() => {
+        fetch('/api/detect-translate/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        })
+        .then(r => r.json())
+        .then(data => {
+            spinner.style.display = 'none';
+            errEl.style.display   = 'none';
+
+            if (data.error) {
+                errEl.textContent   = '⚠ ' + data.error;
+                errEl.style.display = 'block';
+                return;
+            }
+
+            // Show language badge
+            badge.style.display   = 'inline-block';
+            if (data.is_english) {
+                badge.style.background = '#f0fdf4';
+                badge.style.color      = '#16a34a';
+                badge.style.border     = '1px solid #86efac';
+                badge.textContent      = '🇬🇧 English detected';
+                tbox.style.display     = 'none';
+            } else {
+                badge.style.background = '#fff7ed';
+                badge.style.color      = '#ea580c';
+                badge.style.border     = '1px solid #fdba74';
+                badge.textContent      = '🌍 ' + data.detected_lang + ' detected';
+
+                _lastTranslated        = data.translated;
+                preview.textContent    = data.translated;
+                tbox.style.display     = 'block';
+            }
+        })
+        .catch(() => {
+            spinner.style.display = 'none';
+            errEl.textContent     = '⚠ Translation service unavailable.';
+            errEl.style.display   = 'block';
+        });
+    }, 600);
+}
+
+function useTranslation() {
+    if (!_lastTranslated) return;
+    const ta   = document.getElementById('message');
+    const tbox = document.getElementById('translation-box');
+    const badge = document.getElementById('lang-badge');
+
+    ta.value              = _lastTranslated;
+    tbox.style.display    = 'none';
+    badge.style.background = '#f0fdf4';
+    badge.style.color      = '#16a34a';
+    badge.style.border     = '1px solid #86efac';
+    badge.textContent      = '🇬🇧 English (translated)';
+    _lastTranslated        = '';
+}
+</script>
+
+        <!-- Risk Charts -->
+        <div class="charts-container">
+            <div class="chart-container" id="stdrsk">
+                <canvas id="studentsRiskChart"></canvas>
+            </div>
+
+            <div class="chart-container" id="techrsk">
+                <canvas id="teachersRiskChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container"><h3>Teachers and Risk Students</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Number of Students with Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in teacher_student_counts %}
+                        <tr>
+                            <td>{{ item.teacher.name }}</td>
+                            <td>{{ item.zero_count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+        </div>
+        <div class="chart-container"><h3>Students with Risk</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students_with_zero_result %}
+                        <tr>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.user.email }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">No students with Risk</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+    </div>
+
+    <script>
+       
+    </script>
+</body>
+</html>

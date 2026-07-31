@@ -1,0 +1,399 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Student</title>
+    <link rel="stylesheet" href="{% static 'create_student.css' %}">
+    <style>
+        /* ── Page base ── */
+        body {
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 30px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        h1.page-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+        .page-subtitle {
+            color: #666;
+            margin-bottom: 28px;
+            font-size: 14px;
+        }
+
+        /* ── Card / Section ── */
+        .form-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 3px 14px rgba(0,0,0,.08);
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+
+        .section-heading {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #FF8700;
+            border-bottom: 2px solid #FF8700;
+            padding-bottom: 6px;
+            margin: 0 0 22px;
+        }
+
+        /* ── Grid ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px 28px;
+        }
+        .form-grid.single { grid-template-columns: 1fr; }
+
+        /* ── Field ── */
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+
+        .field .hint {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+
+        .field input,
+        .field select {
+            padding: 9px 12px;
+            border: 1px solid #dce1ea;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fafbfc;
+            color: #333;
+            transition: border-color .2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .field input:focus,
+        .field select:focus {
+            border-color: #FF8700;
+            outline: none;
+            background: #fff;
+        }
+
+        /* ── Error text ── */
+        .field .error { color: #e74c3c; font-size: 12px; margin-top: 4px; }
+
+        /* ── Actions ── */
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .btn-submit {
+            padding: 12px 34px;
+            background: linear-gradient(135deg, #FF8700, #e65c00);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(230,92,0,.35);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .btn-submit:hover {
+            transform: scale(1.04);
+            box-shadow: 0 5px 16px rgba(230,92,0,.45);
+        }
+        .btn-back {
+            font-size: 14px;
+            color: #FF8700;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .btn-back:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="page-title">Create New Student</h1>
+    <p class="page-subtitle">Fill in all sections below. Fields marked with * are required.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- ── ACCOUNT CREDENTIALS ── -->
+        <div class="form-card">
+            <p class="section-heading">Account Credentials</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="{{ user_form.email.id_for_label }}">Email Address *</label>
+                    <span class="hint">Used to log in to the student portal.</span>
+                    {{ user_form.email }}
+                    {% if user_form.email.errors %}<span class="error">{{ user_form.email.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ user_form.password.id_for_label }}">Password *</label>
+                    <span class="hint">Must be at least 8 characters.</span>
+                    {{ user_form.password }}
+                    {% if user_form.password.errors %}<span class="error">{{ user_form.password.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ user_form.user_type.id_for_label }}">User Type *</label>
+                    <span class="hint">Should be set to "Student".</span>
+                    {{ user_form.user_type }}
+                    {% if user_form.user_type.errors %}<span class="error">{{ user_form.user_type.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── PERSONAL INFORMATION ── -->
+        <div class="form-card">
+            <p class="section-heading">Personal Information</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="{{ student_form.name.id_for_label }}">First Name *</label>
+                    {{ student_form.name }}
+                    {% if student_form.name.errors %}<span class="error">{{ student_form.name.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.familyname.id_for_label }}">Family Name / Last Name *</label>
+                    {{ student_form.familyname }}
+                    {% if student_form.familyname.errors %}<span class="error">{{ student_form.familyname.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.age.id_for_label }}">Age *</label>
+                    {{ student_form.age }}
+                    {% if student_form.age.errors %}<span class="error">{{ student_form.age.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.sex.id_for_label }}">Gender *</label>
+                    {{ student_form.sex }}
+                    {% if student_form.sex.errors %}<span class="error">{{ student_form.sex.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SCHOOL ASSIGNMENT ── -->
+        <div class="form-card">
+            <p class="section-heading">School Assignment</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="{{ student_form.teacher.id_for_label }}">Assigned Teacher *</label>
+                    {{ student_form.teacher }}
+                    {% if student_form.teacher.errors %}<span class="error">{{ student_form.teacher.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.class_name.id_for_label }}">Class *</label>
+                    {{ student_form.class_name }}
+                    {% if student_form.class_name.errors %}<span class="error">{{ student_form.class_name.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.reason.id_for_label }}">Why did the student choose this school?</label>
+                    {{ student_form.reason }}
+                    {% if student_form.reason.errors %}<span class="error">{{ student_form.reason.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.traveltime.id_for_label }}">Daily Travel Time (Home → School)</label>
+                    {{ student_form.traveltime }}
+                    {% if student_form.traveltime.errors %}<span class="error">{{ student_form.traveltime.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.studytime.id_for_label }}">Weekly Study Time</label>
+                    <span class="hint">How many hours per week the student studies.</span>
+                    {{ student_form.studytime }}
+                    {% if student_form.studytime.errors %}<span class="error">{{ student_form.studytime.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.absences.id_for_label }}">Number of School Absences</label>
+                    {{ student_form.absences }}
+                    {% if student_form.absences.errors %}<span class="error">{{ student_form.absences.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.failures.id_for_label }}">Number of Past Class Failures</label>
+                    <span class="hint">How many subjects the student has previously failed.</span>
+                    {{ student_form.failures }}
+                    {% if student_form.failures.errors %}<span class="error">{{ student_form.failures.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── FAMILY BACKGROUND ── -->
+        <div class="form-card">
+            <p class="section-heading">Family Background</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="{{ student_form.famsize.id_for_label }}">Family Size</label>
+                    <span class="hint">LE3 = 3 or fewer members · GT3 = more than 3 members</span>
+                    {{ student_form.famsize }}
+                    {% if student_form.famsize.errors %}<span class="error">{{ student_form.famsize.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Pstatus.id_for_label }}">Parents' Living Situation</label>
+                    <span class="hint">Are the student's parents living together or apart?</span>
+                    {{ student_form.Pstatus }}
+                    {% if student_form.Pstatus.errors %}<span class="error">{{ student_form.Pstatus.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.guardian.id_for_label }}">Student's Guardian</label>
+                    <span class="hint">Who is legally responsible for the student?</span>
+                    {{ student_form.guardian }}
+                    {% if student_form.guardian.errors %}<span class="error">{{ student_form.guardian.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.famrel.id_for_label }}">Quality of Family Relationships</label>
+                    <span class="hint">How well does the student get along with their family?</span>
+                    {{ student_form.famrel }}
+                    {% if student_form.famrel.errors %}<span class="error">{{ student_form.famrel.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Medu.id_for_label }}">Mother's Education Level</label>
+                    <span class="hint">Highest level of education the mother completed.</span>
+                    {{ student_form.Medu }}
+                    {% if student_form.Medu.errors %}<span class="error">{{ student_form.Medu.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Fedu.id_for_label }}">Father's Education Level</label>
+                    <span class="hint">Highest level of education the father completed.</span>
+                    {{ student_form.Fedu }}
+                    {% if student_form.Fedu.errors %}<span class="error">{{ student_form.Fedu.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Mjob.id_for_label }}">Mother's Occupation</label>
+                    {{ student_form.Mjob }}
+                    {% if student_form.Mjob.errors %}<span class="error">{{ student_form.Mjob.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Fjob.id_for_label }}">Father's Occupation</label>
+                    {{ student_form.Fjob }}
+                    {% if student_form.Fjob.errors %}<span class="error">{{ student_form.Fjob.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SUPPORT & ACTIVITIES ── -->
+        <div class="form-card">
+            <p class="section-heading">Support &amp; Activities</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="{{ student_form.schoolsup.id_for_label }}">Extra School Support</label>
+                    <span class="hint">Does the school provide extra educational support to this student?</span>
+                    {{ student_form.schoolsup }}
+                    {% if student_form.schoolsup.errors %}<span class="error">{{ student_form.schoolsup.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.famsup.id_for_label }}">Family Educational Support</label>
+                    <span class="hint">Does the student's family help them with their studies?</span>
+                    {{ student_form.famsup }}
+                    {% if student_form.famsup.errors %}<span class="error">{{ student_form.famsup.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.paid.id_for_label }}">Extra Paid Tutoring Classes</label>
+                    <span class="hint">Does the student attend paid tutoring outside school?</span>
+                    {{ student_form.paid }}
+                    {% if student_form.paid.errors %}<span class="error">{{ student_form.paid.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.activities.id_for_label }}">Extra-Curricular Activities</label>
+                    <span class="hint">Is the student involved in sports, clubs, or other school activities?</span>
+                    {{ student_form.activities }}
+                    {% if student_form.activities.errors %}<span class="error">{{ student_form.activities.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.nursery.id_for_label }}">Attended Nursery School</label>
+                    <span class="hint">Did the student go to nursery / pre-school before primary school?</span>
+                    {{ student_form.nursery }}
+                    {% if student_form.nursery.errors %}<span class="error">{{ student_form.nursery.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.higher.id_for_label }}">Wants to Pursue Higher Education</label>
+                    <span class="hint">Does the student plan to go to university or college?</span>
+                    {{ student_form.higher }}
+                    {% if student_form.higher.errors %}<span class="error">{{ student_form.higher.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.internet.id_for_label }}">Internet Access at Home</label>
+                    <span class="hint">Does the student have internet access for studying at home?</span>
+                    {{ student_form.internet }}
+                    {% if student_form.internet.errors %}<span class="error">{{ student_form.internet.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.romantic.id_for_label }}">In a Romantic Relationship</label>
+                    {{ student_form.romantic }}
+                    {% if student_form.romantic.errors %}<span class="error">{{ student_form.romantic.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── LIFESTYLE ── -->
+        <div class="form-card">
+            <p class="section-heading">Lifestyle &amp; Wellbeing</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="{{ student_form.freetime.id_for_label }}">Free Time After School</label>
+                    <span class="hint">How much leisure / personal time does the student have each day?</span>
+                    {{ student_form.freetime }}
+                    {% if student_form.freetime.errors %}<span class="error">{{ student_form.freetime.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.goout.id_for_label }}">Goes Out With Friends</label>
+                    <span class="hint">How often does the student socialise outside school?</span>
+                    {{ student_form.goout }}
+                    {% if student_form.goout.errors %}<span class="error">{{ student_form.goout.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Dalc.id_for_label }}">Workday Alcohol Consumption</label>
+                    <span class="hint">How much alcohol does the student typically consume on school days?</span>
+                    {{ student_form.Dalc }}
+                    {% if student_form.Dalc.errors %}<span class="error">{{ student_form.Dalc.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.Walc.id_for_label }}">Weekend Alcohol Consumption</label>
+                    <span class="hint">How much alcohol does the student typically consume on weekends?</span>
+                    {{ student_form.Walc }}
+                    {% if student_form.Walc.errors %}<span class="error">{{ student_form.Walc.errors|join:", " }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ student_form.health.id_for_label }}">Current Health Status</label>
+                    <span class="hint">The student's general physical health rating.</span>
+                    {{ student_form.health }}
+                    {% if student_form.health.errors %}<span class="error">{{ student_form.health.errors|join:", " }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SUBMIT ── -->
+        <div class="actions">
+            <button type="submit" class="btn-submit">✚ Create Student</button>
+            <a href="{% url 'student_list' %}" class="btn-back">← Back to Student List</a>
+        </div>
+
+    </form>
+</div>
+</body>
+</html>

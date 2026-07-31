@@ -1,0 +1,37 @@
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>creat teacher</title>
+    <link rel="stylesheet" href="{% static 'create_teacher.css' %}">
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Update Student Profile -->
+        <section>
+            <h2>Create Teacher</h2>
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- User Details -->
+                <h3>User Details</h3>
+                {{ user_form.as_p }}
+
+                <!-- Teacher Details -->
+                <h3>Teacher Details</h3>
+                {{ teacher_form.as_p }}
+
+                <button type="submit">Create Teacher</button>
+            </form>
+            <a href="{% url 'teacher_list' %}" class="link">Back to Student List</a>
+        </section>
+    </div>
+</body>
+</html>
