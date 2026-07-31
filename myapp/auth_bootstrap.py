@@ -33,12 +33,13 @@ def ensure_default_admin_exists() -> None:
             defaults={
                 "name": "Default",
                 "familyname": "Admin",
-                "phone": "0000000000",
+                "phone": 0,
                 "address": "System",
                 "hiredate": date.today(),
                 "department": "Administration",
             },
         )
+
     except (OperationalError, ProgrammingError, Exception):
         # Tables may not exist yet or DB connection may fail during startup.
         return

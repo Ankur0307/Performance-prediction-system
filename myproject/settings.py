@@ -21,8 +21,9 @@ SECRET_KEY = os.environ.get(
     'django-insecure--=@7)k1mur)&xgmdey&ay(v$1cjssmx@6*(4ud1)_^8si0lx5)'
 )
 
-# DEBUG is False in production (Vercel sets VERCEL=1 automatically).
-DEBUG = os.environ.get('DEBUG', 'False') != 'False'
+# DEBUG defaults to True for deployment diagnostics unless explicitly set to False via env.
+DEBUG = os.environ.get('DEBUG', 'True').lower() not in ('false', '0', 'no')
+
 
 ALLOWED_HOSTS = [
     '192.168.1.11',

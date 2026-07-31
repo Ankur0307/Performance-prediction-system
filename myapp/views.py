@@ -109,7 +109,7 @@ def teacher_dashboard(request, user_id):
                 defaults={
                     "name": user.email.split('@')[0],
                     "familyname": "Teacher",
-                    "phone": "0000000000",
+                    "phone": 0,
                     "address": "System",
                     "hiredate": date.today(),
                     "subject": "General",
@@ -158,7 +158,7 @@ def admin_dashboard(request, user_id):
                 defaults={
                     "name": "Admin",
                     "familyname": "User",
-                    "phone": "0000000000",
+                    "phone": 0,
                     "address": "System",
                     "hiredate": date.today(),
                     "department": "Administration",
@@ -166,6 +166,7 @@ def admin_dashboard(request, user_id):
             )
         else:
             return redirect('login')
+
 
     students = Student.objects.all()
     teachers = Teacher.objects.all()
@@ -182,8 +183,9 @@ def admin_dashboard(request, user_id):
     students_not_at_risk_count = total_students - students_at_risk_count
 
     # Teachers at risk (teaching students with result = '0' or '0.0')
-    teachers_at_risk_count = teachers.filter(Q(student_set__result='0') | Q(student_set__result='0.0')).distinct().count()
+    teachers_at_risk_count = teachers.filter(Q(student__result='0') | Q(student__result='0.0')).distinct().count()
     teachers_not_at_risk_count = total_teachers - teachers_at_risk_count
+
 
     # Count students with result = 0 per teacher
     teacher_student_counts = [
