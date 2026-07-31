@@ -305,9 +305,9 @@ def generate_teacher_report(request, teacher_id):
         "students_result_0": students_result_0,
         "students_result_1": students_result_1,
         "students_result_other": students_result_other,
-        "qr": r"C:\Users\pc\Desktop\myproject\myapp\static\QRID_IDAA23_25.png",  # Path to the QR code image
+        "qr": str(settings.BASE_DIR / 'myapp' / 'static' / 'QRID_IDAA23_25.png'),  # Path to the QR code image
         "report_date": datetime.now().strftime("%Y-%m-%d"),
-        "logo": r"C:\Users\pc\Desktop\myproject\myapp\static\azee.png"
+        "logo": str(settings.BASE_DIR / 'myapp' / 'static' / 'azee.png')
     }
     form_data["pie_chart"] = generate_pie_chart(students_result_0, students_result_1, students_result_other)
 
@@ -366,7 +366,7 @@ def admin_report(request, admin_id):
     total_students_result_1 = Student.objects.filter(result=1).count()
 
     # Path to pre-generated QR code image
-    qr_image_path = r"C:\Users\pc\Desktop\myproject\myapp\static\QRID_IDAA23_25.png"
+    qr_image_path = str(settings.BASE_DIR / 'myapp' / 'static' / 'QRID_IDAA23_25.png')
 
     # Prepare data for the template
     context = {
@@ -378,7 +378,7 @@ def admin_report(request, admin_id):
         'total_students_result_1': total_students_result_1,
         'qr': qr_image_path,  # Direct path to the pre-generated QR code image
         'report_date': date.today().strftime('%Y-%m-%d'),
-        'logo': r"C:\Users\pc\Desktop\myproject\myapp\static\azee.png",  # Path to the logo image
+        'logo': str(settings.BASE_DIR / 'myapp' / 'static' / 'azee.png'),  # Path to the logo image
     }
 
     # Prepare HTML string from template
@@ -676,7 +676,8 @@ from .models import Student
 
 # Helper function to load the model
 def load_model():
-    with open('random_forest_model.pkl', 'rb') as file:
+    model_path = getattr(settings, 'ML_MODEL_PATH', settings.BASE_DIR / 'random_forest_model.pkl')
+    with open(model_path, 'rb') as file:
         model = pickle.load(file)
     return model
 

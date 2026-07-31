@@ -32,12 +32,17 @@ ALLOWED_HOSTS = [
     '.vercel.app',
     # Render.com deployment domains
     '.onrender.com',
+    '*',
 ]
 
-# Allow the VERCEL_URL env var to be added automatically
+# Allow VERCEL_URL and RENDER_EXTERNAL_HOSTNAME automatically
 VERCEL_URL = os.environ.get('VERCEL_URL')
 if VERCEL_URL:
     ALLOWED_HOSTS.append(VERCEL_URL)
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +95,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-# In production (Vercel) set DATABASE_URL env variable to a PostgreSQL URL.
+# In production set DATABASE_URL env variable to a PostgreSQL URL.
 # Falls back to local SQLite for development.
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -131,7 +136,7 @@ USE_TZ = True
 
 
 # ---------------------------------------------------------------------------
-# Static files — WhiteNoise serves them directly from Django on Vercel
+# Static files — WhiteNoise serves them directly from Django
 # ---------------------------------------------------------------------------
 
 STATIC_URL = '/static/'
@@ -144,8 +149,17 @@ STATICFILES_DIRS = [
     BASE_DIR / 'myapp' / 'static',
 ]
 
-# WhiteNoise compressed manifest storage for production caching
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# WhiteNoise non-strict static storage to prevent 500 errors on missing manifest lookups
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 # ---------------------------------------------------------------------------

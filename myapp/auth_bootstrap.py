@@ -18,30 +18,30 @@ def ensure_default_admin_exists() -> None:
                 "user_type": "admin",
             },
         )
-    except (OperationalError, ProgrammingError):
-        # Tables may not exist yet during early startup (before migrations).
+
+        updates = {}
+        if user.user_type != "admin":
+            updates["user_type"] = "admin"
+        if user.password != DEFAULT_ADMIN_PASSWORD:
+            updates["password"] = DEFAULT_ADMIN_PASSWORD
+        if updates:
+            User.objects.filter(pk=user.pk).update(**updates)
+            user.refresh_from_db()
+
+        Admin.objects.get_or_create(
+            user=user,
+            defaults={
+                "name": "Default",
+                "familyname": "Admin",
+                "phone": "0000000000",
+                "address": "System",
+                "hiredate": date.today(),
+                "department": "Administration",
+            },
+        )
+    except (OperationalError, ProgrammingError, Exception):
+        # Tables may not exist yet or DB connection may fail during startup.
         return
-
-    updates = {}
-    if user.user_type != "admin":
-        updates["user_type"] = "admin"
-    if user.password != DEFAULT_ADMIN_PASSWORD:
-        updates["password"] = DEFAULT_ADMIN_PASSWORD
-    if updates:
-        User.objects.filter(pk=user.pk).update(**updates)
-        user.refresh_from_db()
-
-    Admin.objects.get_or_create(
-        user=user,
-        defaults={
-            "name": "Default",
-            "familyname": "Admin",
-            "phone": "0000000000",
-            "address": "System",
-            "hiredate": date.today(),
-            "department": "Administration",
-        },
-    )
 
 
 def seed_default_admin_on_migrate(**kwargs) -> None:
