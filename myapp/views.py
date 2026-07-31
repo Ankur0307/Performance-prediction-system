@@ -400,6 +400,8 @@ def admin_report(request, admin_id):
 
 
 # Student Views
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import base64
 
@@ -409,15 +411,17 @@ def generate_pie_chart(students_result_0, students_result_1, students_result_oth
     sizes = [students_result_0.count(), students_result_1.count(), students_result_other.count()]
     colors = ["#FF5733", "#33FF57", "#337BFF"]
 
-    plt.figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(4, 4))
     plt.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors, startangle=90)
     plt.axis("equal")
 
     buffer = io.BytesIO()
     plt.savefig(buffer, format="png")
+    plt.close(fig)
     buffer.seek(0)
     
     return base64.b64encode(buffer.getvalue()).decode()
+
 
 
 
