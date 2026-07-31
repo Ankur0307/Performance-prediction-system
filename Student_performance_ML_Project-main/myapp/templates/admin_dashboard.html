@@ -1,0 +1,185 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <link rel="stylesheet" href="{% static 'admin_dashboard.css' %}">
+    
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var studentsAtRisk = {{ students_at_risk_count|default:0 }};
+        var studentsNotAtRisk = {{ students_not_at_risk_count|default:0 }};
+        var teachersAtRisk = {{ teachers_at_risk_count|default:0 }};
+        var teachersNotAtRisk = {{ teachers_not_at_risk_count|default:0 }};
+    </script> <!-- Include Chart.js -->
+<div id="chart-data" 
+data-students-at-risk="{{ students_at_risk_count|default:0 }}" 
+data-students-not-at-risk="{{ students_not_at_risk_count|default:0 }}" 
+data-teachers-at-risk="{{ teachers_at_risk_count|default:0 }}" 
+data-teachers-not-at-risk="{{ teachers_not_at_risk_count|default:0 }}">
+</div>
+
+    <script src="{% static 'admin_dashboard.js' %}"></script>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header with Admin Info -->
+        <div class="header">
+            <img src="{% static 'user.png' %}" alt="User Image" width="100px">
+            <div>
+                <p>{{ admin.name }} {{ admin.familyname }}</p>
+                <p>Email: {{ admin.user.email }}</p>
+                <p>Department: {{ admin.department }}</p>
+            </div>
+            <a href="" class="btn">Logout</a>
+        </div>
+        <div class="stats"><h1>Welcome Back, {{ admin.name }}</h1></div>
+        <!-- Stats Section -->
+        <div class="stats">
+            <div>
+                <h3>Stats: </h3>
+                <table><tr><th><img src="{% static '43.png' %}" alt="User Image" width="150px" ></th><td><strong>{{total_students}}</strong></td></tr></table>
+                <table><tr><th><img src="{% static '44.png' %}" alt="User Image" width="150px"></th><td><strong>{{total_teachers}}</strong></td></tr></table>
+                <table><tr><th><img src="{% static '45.png' %}" alt="User Image" width="150px"></th><td><strong>{{total_classes}}</strong></td></tr></table>
+            </div>
+            <div class="actions">
+                <a href="{% url 'generate_admin_report' admin.id %}" class="btn" target="_blank">Generate Report</a>
+                
+            </div>
+        </div>
+        <div class="chart-container"><h3>Easy Access: </h3><!-- Section Buttons -->
+        <div class="buttons-container" id="racco">
+            <a onclick="showDiv('students')" ><img src="{% static '39.png' %}" alt="User Image"  width="290px"></a>
+            <a onclick="showDiv('teachers')"><img src="{% static '40.png' %}" alt="User Image"  width="290px"></a>
+            <a onclick="showDiv('classes')"><img src="{% static '41.png' %}" alt="User Image"  width="290px"></a>
+            <a onclick="showDiv('Recomandations')"><img src="{% static '42  .png' %}" alt="User Image" width="290px"></a>
+        </div>
+        </div>
+        <!-- Manage Students Section -->
+        <div id="students" class="section-content">
+            <h2>Manage Students</h2>
+            <div class="buttons-container" id="racco">
+            <a href="{% url 'create_student' %}" ><img src="{% static '25.png' %}" alt="User Image" width="120px"></a><br></div>
+            <ul>
+                {% for student in students %}
+                    <li>{{ student.name }} <a href="{% url 'ads_student_update' student.id %}"><img src="{% static 'edit.png' %}" alt="User Image" width="30px"></a>  <a href="{% url 'delete_student' student.id %}"><img src="{% static 'delete.png' %}" alt="User Image" width="30px"></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Manage Teachers Section -->
+        <div id="teachers" class="section-content">
+            
+            <h2>Manage Teachers</h2>
+            <div class="buttons-container" id="racco">
+            <a href="{% url 'create_teacher' %}" ><img src="{% static '25.png' %}" alt="User Image" width="120px"></a><br></div>
+            <ul>
+                {% for teacher in teachers %}
+                    <li>{{ teacher.name }} <a href="{% url 'ads_teacher_update' teacher.id %}"><img src="{% static 'edit.png' %}" alt="User Image" width="30px"></a>  <a href="{% url 'delete_teacher' teacher.id %}"><img src="{% static 'delete.png' %}" alt="User Image" width="30px"></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Manage Classes Section -->
+        <div id="classes" class="section-content">
+            
+            <h2>Manage Classes</h2>
+            <div class="buttons-container" id="racco">
+            <a href="{% url 'create_class' %}"><img src="{% static '25.png' %}" alt="User Image" width="120px"></a><br></div>
+            <ul>
+                {% for class in classes %}
+                    <li>{{ class.name }} <a href="{% url 'ads_class_update' class.name %}"><img src="{% static 'edit.png' %}" alt="User Image" width="30px"></a>  <a href="{% url 'delete_class' class.name %}"><img src="{% static 'delete.png' %}" alt="User Image" width="30px"></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+       <!-- Manage Recommendations Section -->
+<div id="Recomandations" class="section-content">
+    <h2>Send Message</h2>
+    <form action="{% url 'send_message_to_teacher' %}" method="POST">
+        {% csrf_token %}
+        
+        <!-- Teacher selection -->
+        <select name="teacher" required>
+            {% for teacher in teachers %}
+                <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Display checkboxes for students with result=0 -->
+        <div><ul>
+            {% for student in students_with_zero_result %}
+                <li><label>
+                    <input type="checkbox" class="student-checkbox" value="{{ student.user.email }}" onclick="updateEmail(this)">
+                    {{ student.name }}
+                </label></li>
+            {% endfor %}
+        </ul>
+        </div>
+        
+
+        <!-- Textarea to enter message -->
+        <textarea id="message" name="message" placeholder="Enter your message" required></textarea><br>
+
+        <br><button type="submit" class="btn" name="send_message_to_teacher">Send Message</button>
+    </form>
+</div>
+        <!-- Risk Charts -->
+        <div class="charts-container">
+            <div class="chart-container" id="stdrsk">
+                <canvas id="studentsRiskChart"></canvas>
+            </div>
+
+            <div class="chart-container" id="techrsk">
+                <canvas id="teachersRiskChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container"><h3>Teachers and Risk Students</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Number of Students with Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in teacher_student_counts %}
+                        <tr>
+                            <td>{{ item.teacher.name }}</td>
+                            <td>{{ item.zero_count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+        </div>
+        <div class="chart-container"><h3>Students with Risk</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students_with_zero_result %}
+                        <tr>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.user.email }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">No students with Risk</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+    </div>
+
+    <script>
+       
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>creat class</title>
+    <link rel="stylesheet" href="{% static 'create_class.css' %}">
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Update Student Profile -->
+        <section>
+            <h2>Create Class</h2>
+        <form method="post">
+            {% csrf_token %}
+            <label for="name">Class Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <button type="submit">Create Class</button>
+        </form>
+            <a href="{% url 'student_list' %}" class="link">Back to Student List</a>
+        </section>
+    </div>
+</body>
+</html>

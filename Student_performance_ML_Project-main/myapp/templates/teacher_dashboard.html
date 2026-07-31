@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="{% static 'teacher_dashboard.css' %}">
+    
+    <style>
+   
+</style>
+</head>
+<body>
+    <div id="chart-data"
+    data-students-zero="{{ students_zero|default:0 }}"
+    data-students-one="{{ students_one|default:0 }}"
+    data-students-other="{{ students_other|default:0 }}">
+</div>
+    <div class="main-content">
+        <div class="header">
+            <img src="{% static 'user.png' %}" alt="User Image" width="100px">
+            <div>
+                <p>{{ teacher.name }} {{ teacher.familyname }}</p>
+                <p>Email: {{ teacher.user.email }}</p>
+                <p>Subject: {{ teacher.subject }}</p>
+            </div>
+            <a href="" class="btn">Logout</a>
+        </div><div class="stats"><h3>Welcome Back, {{ teacher.name }}</h3></div>
+        <div class="stats-container">
+            <div class="stats">
+                <table class="teacher-info-table">
+                    <tr><th>Name</th><td>{{ teacher.name }}</td></tr>
+                    <tr><th>Family Name</th><td>{{ teacher.familyname }}</td></tr>
+                    <tr><th>Phone</th><td>{{ teacher.phone }}</td></tr>
+                    <tr><th>Address</th><td>{{ teacher.address }}</td></tr>
+                    <tr><th>Hire Date</th><td>{{ teacher.hiredate }}</td></tr>
+                    <tr><th>Subject</th><td>{{ teacher.subject }}</td></tr>
+                </table>
+            </div>
+        
+            <div class="stats">
+                <div class="chart-container" id="stdrsk">
+                    <h3>Proucent of students Perfo : </h3>
+                    <canvas id="studentResultsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+        <section id="students">
+            
+            <div class="table-container">
+                
+                <table class="student-table">
+                    <h3>My Students :</h3>
+                    <tr>
+                        <th>Name & Family Name</th>
+                        <th>Email</th>
+                    </tr>
+                    {% for student in students %}
+                        {% if student.result != 1 and student.result != 0 %}
+                            <tr>
+                                <td>{{ student.name }} {{ student.familyname }}</td>
+                                <td>{{ student.user.email }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </div>
+        
+        </section>
+        
+        <section id="messages">
+            <h2>Send Message to Students</h2>
+            <form action="{% url 'send_message_to_student' %}" method="POST">
+                {% csrf_token %}
+                <select name="student" required>
+                    {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.name }}</option>
+                    {% endfor %}
+                </select>
+                <textarea name="message" placeholder="Enter your message" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+        </section>
+
+        <section id="messages">
+            <h2>Messages</h2>
+            <ul>
+                {% for message in teacher.user.received_messages.all %}
+                    <li>{{ message.content }} - {{ message.sent_at }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section id="reports">
+            <h2>Generate Reports</h2><br><br>
+            <a href="{% url 'generate_teacher_report' teacher.id %}" class="btn" target="_blank">Generate Report</a>
+        </section>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'teacher_dashboard.js' %}"></script>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'student_dashboard.css' %}">
+    
+    <style>
+
+    </style>
+</head>
+<body>
+    
+    <div id="chart-data"
+    data-student-absences="{{ student.absences|default:0 }}"
+    data-mean-absences="{{ mean_absences|default:0 }}"
+    data-student-g3="{{ student.G3|default:0 }}"
+    data-mean-g3="{{ mean_G3|default:0 }}"
+    data-student-studytime="{{ student.studytime|default:0 }}"
+    data-mean-studytime="{{ mean_studytime|default:0 }}">
+</div>
+
+<!-- Import Chart.js (if not already included) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="user-info">
+            <img src="{% static 'user.png' %}" alt="User Avatar">
+            <div>
+                <h3>{{ student.name }} - {{ student.familyname }}</h3>
+                <h4>{{ student.teacher }} - {{ student.class_name }}</h4>
+            </div>
+        </div>
+        <div class="buttons">
+            <a href="#logout" class="btn">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Welcome, {{ student.name }}</h1>
+            <div class="alert-message {% if student.result == '0' %}risk{% else %}no-risk{% endif %}">
+                {% if student.result == '1' %}
+                    You are at risk!
+                {% elif student.result == '0' %}
+                    No risk detected.
+                {% else %}
+                    No predection yet.
+                {% endif %}
+            </div>
+            <div class="buttons">
+                <a href="{% url 'predict_student_result' student.id %}" class="btn">Predict Result</a>
+                <a href="{% url 'generate_report' student.id %}" class="btn">Generate PDF Report</a>
+                
+            </div>
+            
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+            <table class="student-info-table">
+                <tr><th>Name</th><td>{{ student.name }}</td></tr>
+                <tr><th>Family Name</th><td>{{ student.familyname }}</td></tr>
+                <tr><th>Class</th><td>{{ student.class_name }}</td></tr>
+                <tr><th>Teacher</th><td>{{ student.teacher }}</td></tr>
+                <tr><th>Absences</th><td>{{ student.absences }}</td></tr>
+                <tr><th>Study Time</th><td>{{ student.studytime }}</td></tr>
+            </table>
+            <div class="chart-box">
+                <h3>Absence Analysis</h3>
+                <canvas id="absenceChart"></canvas>
+            </div>
+            <!-- Student Info Table -->
+            
+        </div><br>
+
+        <!-- More Charts -->
+        <div class="charts-container">
+            <div class="chart-box">
+                <h3>G3 Performance</h3>
+                <canvas id="G3Chart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Study Time Analysis</h3>
+                <canvas id="studyTimeChart"></canvas>
+            </div><br>
+        </div>
+
+        <!-- Messages Section -->
+        <div class="charts-container">
+            <div class="chart-box">
+                <section id="messages" class="inline-section">
+                    <h2>Messages</h2>
+                    <ul>
+                        {% for message in student.user.received_messages.all %}
+                            <li><span>{{ message.sent_at }} </span> -- {{ message.content }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'student_dashboard.js' %}"></script>
+    
+</body>
+</html>

@@ -1,0 +1,33 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>creat student</title>
+    <link rel="stylesheet" href="{% static 'create_student.css' %}">
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Update Student Profile -->
+        <section>
+            <form method="POST">
+                <h2>Create Student</h2>
+                {% csrf_token %}
+                <!-- User Details -->
+                <h3>User Details</h3>
+                {{ user_form.as_p }}
+                <!-- Student Details -->
+                <h3>Student Details</h3>
+                {{ student_form.as_p }}
+                <button type="submit" class="btn">Create Student</button>
+            </form>
+            <a href="{% url 'student_list' %}" class="link">Back to Student List</a>
+        </section>
+    </div>
+</body>
+</html>
