@@ -15,8 +15,6 @@ from reportlab.pdfgen import canvas
 
 # Login view
 def login_view(request):
-    # Import the custom User model locally to avoid being shadowed by
-    # the module-level `User = get_user_model()` assignments below.
     from myapp.models import User as CustomUser
     ensure_default_admin_exists()
     if request.method == "POST":
@@ -26,18 +24,17 @@ def login_view(request):
             password = form.cleaned_data['password']
             try:
                 user = CustomUser.objects.get(email=email, password=password)
-                # Store user_id in session so other views can identify the logged-in user
                 request.session['user_id'] = user.id
                 request.session['user_type'] = user.user_type
-                x = user.id - 1
                 if user.user_type == 'student':
-                    return redirect(f'/student/{x}/dashboard/')
+                    student = Student.objects.filter(user=user).first()
+                    sid = student.id if student else user.id
+                    return redirect('student_dashboard', student_id=sid)
                 elif user.user_type == 'teacher':
-                    return redirect(f'/teacher/{user.id}/dashboard/')
+                    return redirect('teacher_dashboard', user_id=user.id)
                 elif user.user_type == 'admin':
-                    return redirect(f'/ads/{user.id}/dashboard/')
+                    return redirect('admin_dashboard', user_id=user.id)
             except CustomUser.DoesNotExist:
-                # Handle incorrect login
                 return render(request, 'login.html', {'form': form, 'error': 'Invalid credentials'})
     else:
         form = LoginForm()
@@ -56,16 +53,17 @@ from .models import Student
 from django.db.models import Avg
 
 def student_dashboard(request, student_id):
-    stx = student_id - 2
-    student = Student.objects.get(id=stx)
+    student = Student.objects.filter(id=student_id).first() or Student.objects.filter(user_id=student_id).first()
+    if not student:
+        student = get_object_or_404(Student, id=student_id)
 
     # Get all students in the same class
-    class_students = Student.objects.filter(class_name=student.class_name)
+    class_students = Student.objects.filter(class_name=student.class_name) if student.class_name else Student.objects.filter(id=student.id)
 
     # Calculate mean values for absences, study time, and G3 score in the same class
-    mean_absences = class_students.aggregate(Avg('absences'))['absences__avg']
-    mean_studytime = class_students.aggregate(Avg('studytime'))['studytime__avg']
-    mean_G3 = class_students.aggregate(Avg('G3'))['G3__avg']
+    mean_absences = class_students.aggregate(Avg('absences'))['absences__avg'] or 0
+    mean_studytime = class_students.aggregate(Avg('studytime'))['studytime__avg'] or 0
+    mean_G3 = class_students.aggregate(Avg('G3'))['G3__avg'] or 0
 
     # Pass student data and calculated mean values to the template
     return render(request, 'student_dashboard.html', {
@@ -80,16 +78,6 @@ from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from .models import Teacher, Student, Message
 
-from django.shortcuts import render, get_object_or_404
-from django.http import Http404
-from .models import Teacher, Student, Message
-from django.db.models import Q
-
-from django.shortcuts import render, get_object_or_404
-from django.http import Http404
-from django.db.models import Count, Q
-from .models import Teacher, Student, Message
-
 def teacher_dashboard(request, user_id):
     # Get the teacher based on user_id
     teacher = get_object_or_404(Teacher, user_id=user_id)
@@ -98,13 +86,13 @@ def teacher_dashboard(request, user_id):
     students = Student.objects.filter(teacher=teacher)
 
     # Categorize students based on their results
-    students_zero = students.filter(result=0).count()  # Students with result 0
-    students_one = students.filter(result=1).count()  # Students with result 1
-    students_other = students.exclude(result__in=[0, 1]).count()  # Students with other results
+    students_zero = students.filter(result=0).count()
+    students_one = students.filter(result=1).count()
+    students_other = students.exclude(result__in=[0, 1]).count()
 
-    # Fetch all messages related to the teacher
+    # Fetch all messages related to the teacher using custom user email
     messages = Message.objects.filter(
-        Q(sender__email=request.user.email) | Q(recipient__email=request.user.email)
+        Q(sender__email=teacher.user.email) | Q(recipient__email=teacher.user.email)
     )
 
     # Send the categorized data to the template
@@ -120,16 +108,9 @@ def teacher_dashboard(request, user_id):
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import User, Student, Teacher, Admin, Message, Class
 from .forms import StudentForm, TeacherForm
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
-from django.http import JsonResponse
-
-
-from django.shortcuts import get_object_or_404, render, redirect
-from django.http import JsonResponse
-from .models import Admin, Student, Teacher, Class, Message
 
 def admin_dashboard(request, user_id):
     admin = get_object_or_404(Admin, user_id=user_id)
@@ -148,7 +129,7 @@ def admin_dashboard(request, user_id):
     students_not_at_risk_count = total_students - students_at_risk_count
 
     # Teachers at risk (teaching students with result = 0)
-    teachers_at_risk_count = teachers.filter(student__result=0).distinct().count()
+    teachers_at_risk_count = teachers.filter(student_set__result=0).distinct().count()
     teachers_not_at_risk_count = total_teachers - teachers_at_risk_count
 
     # Count students with result = 0 per teacher
@@ -161,11 +142,10 @@ def admin_dashboard(request, user_id):
     if request.method == 'POST' and 'send_message_to_teacher' in request.POST:
         teacher_id = request.POST['teacher']
         message_content = request.POST['message']
-        # Translate message to English if it is in another language
         message_content = translate_to_english(message_content)
         teacher = get_object_or_404(Teacher, id=teacher_id)
         Message.objects.create(
-            sender=request.user,
+            sender=admin.user,
             recipient=teacher.user,
             content=message_content,
             message_type='admin_to_teacher'
@@ -186,6 +166,7 @@ def admin_dashboard(request, user_id):
         'teacher_student_counts': teacher_student_counts,
         'students_with_zero_result': students_at_risk,
     })
+
 
 
 from django.http import HttpResponse
